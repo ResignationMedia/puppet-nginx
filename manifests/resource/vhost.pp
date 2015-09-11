@@ -627,7 +627,7 @@ define nginx::resource::vhost (
     concat::fragment { "${name_sanitized}-ssl-header":
       target  => $config_file,
       content => template('nginx/vhost/vhost_ssl_header.erb'),
-      order   => '700',
+      order   => '401',
     }
     concat::fragment { "${name_sanitized}-ssl-footer":
       target  => $config_file,
