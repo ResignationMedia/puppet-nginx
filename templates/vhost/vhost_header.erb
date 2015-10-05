@@ -134,6 +134,6 @@ server {
   error_log             <%= @error_log_real %>;
 <% unless @proxy_set_header.nil? -%>
     <%- @proxy_set_header.each do |header| -%>
-   proxy_set_header    <%= header %>;
+  proxy_set_header    <%= header %>;
     <%- end -%>
 <% end -%>
