@@ -8,3 +8,4 @@ spec/fixtures/manifests
 vendor
 .ruby-version
 .vagrant/
+*.swp
