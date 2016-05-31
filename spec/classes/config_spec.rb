@@ -104,7 +104,13 @@ describe 'nginx::config' do
           :title => 'should set error_log',
           :attr  => 'nginx_error_log',
           :value => '/path/to/error.log',
-          :match => 'error_log  /path/to/error.log;',
+          :match => 'error_log  /path/to/error.log error;',
+        },
+        {
+          :title => 'should set error_log severity level',
+          :attr  => 'nginx_error_log_severity',
+          :value => 'warn',
+          :match => 'error_log  /var/log/nginx/error.log warn;',
         },
         {
             :title => 'should set pid',
@@ -117,6 +123,24 @@ describe 'nginx::config' do
           :attr  => 'pid',
           :value => false,
           :notmatch => /pid/,
+        },
+        {
+          :title => 'should set accept_mutex on',
+          :attr  => 'accept_mutex',
+          :value => 'on',
+          :match => '  accept_mutex on;',
+        },
+        {
+          :title => 'should set accept_mutex off',
+          :attr  => 'accept_mutex',
+          :value => 'off',
+          :match => '  accept_mutex off;',
+        },
+        {
+          :title => 'should set accept_mutex_delay',
+          :attr  => 'accept_mutex_delay',
+          :value => '500s',
+          :match => '  accept_mutex_delay 500s;',
         },
         {
           :title => 'should set worker_connections',
@@ -559,6 +583,12 @@ describe 'nginx::config' do
       it { is_expected.to contain_file("/var/nginx/client_body_temp").with(:owner => 'www-data')}
       it { is_expected.to contain_file("/var/nginx/proxy_temp").with(:owner => 'www-data')}
       it { is_expected.to contain_file("/etc/nginx/nginx.conf").with_content %r{^user www-data;}}
+    end
+
+    context "when nginx_error_log_severity = invalid" do
+      let(:params) {{:nginx_error_log_severity => 'invalid'}}
+
+      it { expect { is_expected.to contain_class('nginx::config') }.to raise_error(Puppet::Error,/\$nginx_error_log_severity must be debug, info, notice, warn, error, crit, alert or emerg/) }
     end
   end
 end

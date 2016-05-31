@@ -1,3 +1,4 @@
+# MANAGED BY PUPPET
 <% if @super_user -%>
 user <%= @daemon_user %>;
 <% end -%>
@@ -9,7 +10,7 @@ worker_rlimit_nofile <%= @worker_rlimit_nofile %>;
 <% if @pid -%>
 pid        <%= @pid %>;
 <% end -%>
-error_log  <%= @nginx_error_log %>;
+error_log  <%= @nginx_error_log %> <%= @nginx_error_log_severity %>;
 
 <% if @nginx_cfg_prepend -%>
 <%- field_width = @nginx_cfg_prepend.inject(0) { |l,(k,v)| k.size > l ? k.size : l } -%>
@@ -21,6 +22,10 @@ error_log  <%= @nginx_error_log %>;
 <% end -%>
 
 events {
+  accept_mutex <%= @accept_mutex %>;
+  <%- if @accept_mutex_delay -%>
+  accept_mutex_delay <%= @accept_mutex_delay %>;
+  <%- end -%>
   worker_connections <%= @worker_connections -%>;
   <%- if @multi_accept == 'on' -%>
     multi_accept on;
@@ -73,7 +78,9 @@ http {
 <% if @gzip_proxied -%>
   gzip_proxied      <%= @gzip_proxied %>;
 <% end -%>
+<% if @gzip_types -%>
   gzip_types        <%= @gzip_types.kind_of?(Array) ? @gzip_types.join(' ') : @gzip_types %>;
+<% end -%>
   gzip_vary         <%= @gzip_vary %>;
 <% end -%>
 
@@ -116,9 +123,12 @@ http {
 <% if @proxy_headers_hash_bucket_size -%>
   proxy_headers_hash_bucket_size <%= @proxy_headers_hash_bucket_size %>;
 <% end -%>
-<% if @proxy_cache_path -%>
+<% if @proxy_cache_path.is_a?(Hash) -%>
+<% @proxy_cache_path.sort_by{|k,v| k}.each do |key,value| -%>
+  proxy_cache_path        <%= key %> keys_zone=<%= value %> levels=<%= @proxy_cache_levels %> max_size=<%= @proxy_cache_max_size %> inactive=<%= @proxy_cache_inactive %>;
+<% end -%>
+<% elsif @proxy_cache_path -%>
   proxy_cache_path        <%= @proxy_cache_path %> levels=<%= @proxy_cache_levels %> keys_zone=<%= @proxy_cache_keys_zone %> max_size=<%= @proxy_cache_max_size %> inactive=<%= @proxy_cache_inactive %>;
-
 <% end -%>
 <% if @fastcgi_cache_path -%>
   fastcgi_cache_path    	<%= @fastcgi_cache_path %> levels=<%= @fastcgi_cache_levels %> keys_zone=<%= @fastcgi_cache_keys_zone %> max_size=<%= @fastcgi_cache_max_size %> inactive=<%= @fastcgi_cache_inactive %>;
@@ -145,5 +155,10 @@ http {
 <% if @mail -%>
 mail {
   include <%= @conf_dir %>/conf.mail.d/*.conf;
+}
+<% end -%>
+<% if @stream -%>
+stream {
+  include <%= @conf_dir %>/conf.stream.d/*.conf;
 }
 <% end -%>
