@@ -8,6 +8,7 @@ describe 'nginx::resource::vhost' do
     {
       :www_root    => '/',
       :ipv6_enable => true,
+      :listen_unix_socket_enable => true,
     }
   end
   let :facts do
@@ -112,6 +113,30 @@ describe 'nginx::resource::vhost' do
           :attr  => 'ipv6_listen_options',
           :value => 'spdy',
           :match => %r'\s+listen\s+\[::\]:80 spdy;',
+        },
+        {
+          :title => 'should enable listening on unix socket',
+          :attr  => 'listen_unix_socket_enable',
+          :value => true,
+          :match => %r'\s+listen\s+unix:/var/run/nginx\.sock;',
+        },
+        {
+          :title    => 'should not enable listening on unix socket',
+          :attr     => 'listen_unix_socket_enable',
+          :value    => false,
+          :notmatch => %r'\s+listen\s+unix:/var/run/nginx\.sock;',
+        },
+        {
+          :title => 'should set the listen unix socket',
+          :attr  => 'listen_unix_socket',
+          :value => '/var/run/puppet_nginx.sock',
+          :match => %r'\s+listen\s+unix:/var/run/puppet_nginx\.sock;',
+        },
+        {
+          :title => 'should set the listen unix socket options',
+          :attr  => 'listen_unix_socket_options',
+          :value => 'spdy',
+          :match => %r'\s+listen\s+unix:/var/run/nginx\.sock spdy;',
         },
         {
           :title => 'should set servername(s)',
@@ -371,6 +396,18 @@ describe 'nginx::resource::vhost' do
         {
           :title => 'should not set SPDY',
           :attr  => 'spdy',
+          :value => 'off',
+          :match => %r'\s+listen\s+\*:443 ssl;',
+        },
+        {
+          :title => 'should set HTTP2',
+          :attr  => 'http2',
+          :value => 'on',
+          :match => %r'\s+listen\s+\*:443 ssl http2;',
+        },
+        {
+          :title => 'should not set HTTP2',
+          :attr  => 'http2',
           :value => 'off',
           :match => %r'\s+listen\s+\*:443 ssl;',
         },
@@ -711,8 +748,8 @@ describe 'nginx::resource::vhost' do
           }
         end
 
-        it "should set the server_name of the rewrite server stanza to the first server_name with 'www.' stripped" do
-          is_expected.to contain_concat__fragment("#{title}-ssl-header").with_content(/^\s+server_name\s+foo.com;/)
+        it "should set the server_name of the rewrite server stanza to every server_name with 'www.' stripped" do
+          is_expected.to contain_concat__fragment("#{title}-ssl-header").with_content(/^\s+server_name\s+foo.com\s+bar.foo.com\s+foo.com;/)
         end
       end
 
@@ -726,8 +763,8 @@ describe 'nginx::resource::vhost' do
           }
         end
 
-        it "should set the server_name of the rewrite server stanza to the first server_name with 'www.' stripped" do
-          is_expected.to contain_concat__fragment("#{title}-header").with_content(/^\s+server_name\s+foo.com;/)
+        it "should set the server_name of the rewrite server stanza to every server_name with 'www.' stripped" do
+          is_expected.to contain_concat__fragment("#{title}-header").with_content(/^\s+server_name\s+foo.com\s+bar.foo.com\s+foo.com;/)
         end
       end
 
@@ -818,10 +855,30 @@ describe 'nginx::resource::vhost' do
         it { is_expected.not_to contain_concat__fragment("#{title}-footer") }
       end
 
+      context 'when listen_port == "ssl_port"' do
+        let :params do default_params.merge({
+          :listen_port => 80,
+          :ssl_port    => '80',
+        }) end
+
+        it { is_expected.not_to contain_concat__fragment("#{title}-header") }
+        it { is_expected.not_to contain_concat__fragment("#{title}-footer") }
+      end
+
       context 'when listen_port != ssl_port' do
         let :params do default_params.merge({
           :listen_port => 80,
           :ssl_port    => 443,
+        }) end
+
+        it { is_expected.to contain_concat__fragment("#{title}-header") }
+        it { is_expected.to contain_concat__fragment("#{title}-footer") }
+      end
+
+      context 'when listen_port != "ssl_port"' do
+        let :params do default_params.merge({
+          :listen_port => 80,
+          :ssl_port    => '443',
         }) end
 
         it { is_expected.to contain_concat__fragment("#{title}-header") }
@@ -865,12 +922,13 @@ describe 'nginx::resource::vhost' do
           :ssl_key            => 'dummy.key',
           :ssl_cert           => 'dummy.cert',
           :ssl_client_cert    => 'client.cert',
+          :ssl_verify_client  => 'optional',
         }) end
 
         it { is_expected.to contain_nginx__resource__location("#{title}-default").with_ssl_only(true) }
         it { is_expected.to contain_concat__fragment("#{title}-ssl-header").with_content(%r{access_log\s+/var/log/nginx/ssl-www\.rspec\.example\.com\.access\.log combined;}) }
         it { is_expected.to contain_concat__fragment("#{title}-ssl-header").with_content(%r{error_log\s+/var/log/nginx/ssl-www\.rspec\.example\.com\.error\.log}) }
-        it { is_expected.to contain_concat__fragment("#{title}-ssl-header").with_content(%r{ssl_verify_client on;}) }
+        it { is_expected.to contain_concat__fragment("#{title}-ssl-header").with_content(%r{ssl_verify_client\s+optional;}) }
       end
       context 'when passenger_cgi_param is set' do
         let :params do default_params.merge({
