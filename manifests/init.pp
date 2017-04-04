@@ -122,91 +122,26 @@ class nginx (
   $nginx_upstreams                = {},
   $nginx_vhosts                   = {},
   $nginx_vhosts_defaults          = {},
+  $hiera_merge                    = true,
   ### END Hiera Lookups ###
 ) inherits ::nginx::params {
-
-  ### DEPRECATION WARNING ###
-  ###
-  ### During the transition from the params pattern -> puppet-module-data,
-  ### we need a graceful way to notify the consumer that the pattern is
-  ### changing, and point them toward docs on how to transition.
-  ###
-  ### Once we hit 1.0, this whole block goes away.
-  ###
-  ### Please note: as a contributor to this module, no Pulls will be accepted
-  ### that do add additional parameters to this class. Get on this puppet-module-data
-  ### level!
-
-  ### This block makes me sad, but what can you do.... we need to do this
-  ### migration the Right Way(tm) -- JDF
-
-  #if $client_body_buffer_size or
-  #      $client_body_temp_path or
-  #      $client_max_body_size or
-  #      $confd_purge or
-  #      $conf_dir or
-  #      $conf_template or
-  #      $daemon_user or
-  #      $events_use or
-  #      $fastcgi_cache_inactive or
-  #      $fastcgi_cache_key or
-  #      $fastcgi_cache_keys_zone or
-  #      $fastcgi_cache_levels or
-  #      $fastcgi_cache_max_size or
-  #      $fastcgi_cache_path or
-  #      $fastcgi_cache_use_stale or
-  #      $gzip or
-  #      $http_access_log or
-  #      $http_cfg_append or
-  #      $http_tcp_nodelay or
-  #      $http_tcp_nopush or
-  #      $keepalive_timeout or
-  #      $logdir or
-  #      $log_format or
-  #      $mail or
-  #      $multi_accept or
-  #      $names_hash_bucket_size or
-  #      $names_hash_max_size or
-  #      $nginx_error_log or
-  #      $pid or
-  #      $proxy_buffers or
-  #      $proxy_buffer_size or
-  #      $proxy_cache_inactive or
-  #      $proxy_cache_keys_zone or
-  #      $proxy_cache_levels or
-  #      $proxy_cache_max_size or
-  #      $proxy_cache_path or
-  #      $proxy_conf_template or
-  #      $proxy_connect_timeout or
-  #      $proxy_headers_hash_bucket_size or
-  #      $proxy_http_version or
-  #      $proxy_read_timeout or
-  #      $proxy_redirect or
-  #      $proxy_send_timeout or
-  #      $proxy_set_header or
-  #      $proxy_temp_path or
-  #      $run_dir or
-  #      $sendfile or
-  #      $server_tokens or
-  #      $spdy or
-  #      $super_user or
-  #      $temp_dir or
-  #      $types_hash_bucket_size or
-  #      $types_hash_max_size or
-  #      $vhost_purge or
-  #      $worker_connections or
-  #      $worker_processes or
-  #      $worker_rlimit_nofile or
-  #      $global_owner or
-  #      $global_group or
-  #      $global_mode or
-  #      $sites_available_owner or
-  #      $sites_available_group or
-  #      $sites_available_mode {
-  #        include ::nginx::notice::config
-  #      }
-
-  ### END DEPRECATION WARNING ###
+  if $hiera_merge {
+    $geo_mappings_real = hiera_hash('nginx::geo_mappings', {})
+    $string_mappings_real = hiera_hash('nginx::string_mappings', {})
+    $nginx_locations_real = hiera_hash('nginx::nginx_locations', {})
+    $nginx_mailhosts_real = hiera_hash('nginx::nginx_mailhosts', {})
+    $nginx_upstreams_real = hiera_hash('nginx::nginx_upstreams', {})
+    $nginx_vhosts_real = hiera_hash('nginx::nginx_vhosts', {})
+    $nginx_vhosts_defaults_real = hiera_hash('nginx::nginx_vhosts_defaults', {})
+  } else {
+    $geo_mappings_real = $geo_mappings
+    $string_mappings_real = $string_mappings
+    $nginx_locations_real = $nginx_locations
+    $nginx_mailhosts_reak = $nginx_mailhosts
+    $nginx_upstreams_real = $nginx_upstreams
+    $nginx_vhosts_real = $nginx_vhosts
+    $nginx_vhosts_defaults_real = $nginx_vhosts_defaults
+  }
 
   class { '::nginx::package':
     package_name   => $package_name,
@@ -296,12 +231,12 @@ class nginx (
     service_flags     => $service_flags,
   }
 
-  create_resources('nginx::resource::upstream', $nginx_upstreams)
-  create_resources('nginx::resource::vhost', $nginx_vhosts, $nginx_vhosts_defaults)
-  create_resources('nginx::resource::location', $nginx_locations)
-  create_resources('nginx::resource::mailhost', $nginx_mailhosts)
-  create_resources('nginx::resource::map', $string_mappings)
-  create_resources('nginx::resource::geo', $geo_mappings)
+  create_resources('nginx::resource::upstream', $nginx_upstreams_real)
+  create_resources('nginx::resource::vhost', $nginx_vhosts, $nginx_vhosts_defaults_real)
+  create_resources('nginx::resource::location', $nginx_locations_real)
+  create_resources('nginx::resource::mailhost', $nginx_mailhosts_real)
+  create_resources('nginx::resource::map', $string_mappings_real)
+  create_resources('nginx::resource::geo', $geo_mappings_real)
 
   # Allow the end user to establish relationships to the "main" class
   # and preserve the relationship to the implementation classes through
