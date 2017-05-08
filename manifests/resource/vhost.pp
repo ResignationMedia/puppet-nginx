@@ -257,6 +257,8 @@ define nginx::resource::vhost (
   $include_files                = undef,
   $access_log                   = undef,
   $error_log                    = undef,
+  $access_logs                  = [],
+  $error_logs                   = [],
   $format_log                   = 'combined',
   $passenger_cgi_param          = undef,
   $passenger_set_header         = undef,

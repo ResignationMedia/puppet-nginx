@@ -149,8 +149,21 @@ server {
   log_by_lua_file "<%= @log_by_lua_file %>";
 <% end -%>
 
+<% if @access_logs.is_a?(Array) and @access_logs.length > 0 -%>
+<% @access_logs.each do |access_log| -%>
+  access_log            <%= access_log %> <%= @format_log %>;
+<% end -%>
+
+<% else -%>
   access_log            <%= @access_log_real %>;
-  error_log             <%= @error_log_real %>;
+<% end -%>
+<% if @error_logs.is_a?(Array) and @error_logs.length > 0 -%>
+<% @error_logs.each do |error_log| -%>
+  error_log            <%= error_log %>;
+<% end -%>
+<% else -%>
+  error_log            <%= @error_log_real %>;
+<% end -%>
 <% unless @proxy_set_header.nil? -%>
     <%- @proxy_set_header.each do |header| -%>
   proxy_set_header    <%= header %>;
