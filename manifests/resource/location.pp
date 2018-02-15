@@ -350,7 +350,9 @@ define nginx::resource::location (
   $location_sanitized = regsubst($location_sanitized_tmp, '\\\\', '_', 'G')
 
   # Use proxy or fastcgi template if $proxy is defined, otherwise use directory template.
-  if ($proxy != undef) {
+  if ($location_custom_cfg != undef) {
+    $content_real = template('nginx/vhost/locations/empty.erb')
+  } elsif ($proxy != undef) {
     $content_real = template('nginx/vhost/locations/proxy.erb')
   } elsif ($location_alias != undef) {
     $content_real = template('nginx/vhost/locations/alias.erb')
