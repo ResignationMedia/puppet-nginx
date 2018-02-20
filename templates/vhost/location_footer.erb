@@ -38,4 +38,25 @@
     include <%= include_file %>;
   <%- end -%>
 <% end -%>
+<% if @inner_locations -%>
+  <% for @inner_locations.each do |loc,cfg| -%>
+  location <%= cfg['location'] %> {
+    <% if cfg.key?('location_custom_cfg') and cfg['location_custom_cfg'].is_a?(Hash) -%>
+        <% for cfg['location_custom_cfg'].each do |key,value| -%>
+            <%- if value.is_a?(Hash) -%>
+                <%- value.sort_by {|k,v| k}.each do |subkey,subvalue| -%>
+                    <%- Array(subvalue).each do |asubvalue| -%>
+                    <%= key %> <%= subkey %> <%= asubvalue %>;
+                <%- end -%>
+            <%- end -%>
+            <%- else -%>
+                <%- Array(value).each do |asubvalue| -%>
+                    <%= key %> <%= asubvalue %>;
+                <%- end -%>
+            <%- end -%>
+        <% end -%>
+    <% end -%>
+  }
+  <% end -%>
+<% end -%>
   }
