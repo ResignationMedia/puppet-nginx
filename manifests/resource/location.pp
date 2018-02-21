@@ -169,6 +169,7 @@ define nginx::resource::location (
   $location_cfg_append  = undef,
   $location_custom_cfg_prepend  = undef,
   $location_custom_cfg_append   = undef,
+  $inner_locations      = undef,
   $include              = undef,
   $try_files            = undef,
   $proxy_cache          = false,
@@ -279,6 +280,9 @@ define nginx::resource::location (
   }
   if ($location_cfg_append != undef) {
     validate_hash($location_cfg_append)
+  }
+  if ($inner_locations != undef) {
+    validate_hash($inner_locations)
   }
   if ($include != undef) {
     validate_array($include)
