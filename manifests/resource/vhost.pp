@@ -159,7 +159,8 @@
 #   [*maintenance*]             - A boolean value to set a vhost in maintenance
 #   [*maintenance_value*]       - Value to return when maintenance is on.
 #                                 Default to return 503
-#   [*locations*]               - Hash of vhosts ressources used by this vhost
+#   [*inner_locations*]         - Hash of location blocks to put under the main root location block (/) for this vhost
+#   [*locations*]               - Hash of location ressources used by this vhost
 # Actions:
 #
 # Requires:
@@ -275,9 +276,9 @@ define nginx::resource::vhost (
   $mode                         = $::nginx::config::global_mode,
   $maintenance                  = false,
   $maintenance_value            = 'return 503',
-  $locations                    = {}
+  $inner_locations              = {},
+  $locations                    = {},
 ) {
-
   validate_re($ensure, '^(present|absent)$',
     "${ensure} is not supported for ensure. Allowed values are 'present' and 'absent'.")
   if !(is_array($listen_ip) or is_string($listen_ip)) {
@@ -508,6 +509,7 @@ define nginx::resource::vhost (
   validate_array($rewrite_rules)
   validate_hash($string_mappings)
   validate_hash($geo_mappings)
+  validate_hash($inner_locations)
   validate_hash($locations)
 
   validate_string($owner)
@@ -612,6 +614,7 @@ define nginx::resource::vhost (
       rewrite_rules               => $rewrite_rules,
       raw_prepend                 => $location_raw_prepend,
       raw_append                  => $location_raw_append,
+      inner_locations             => $inner_locations,
       notify                      => Class['nginx::service'],
     }
     $root = undef
