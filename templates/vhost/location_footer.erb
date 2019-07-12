@@ -39,8 +39,8 @@
   <%- end -%>
 <% end -%>
 <% if @inner_locations -%>
-
   <%- @inner_locations.each do |loc,cfg| -%>
+
     location <%= cfg['location'] %> {
       <%- if cfg.key?('location_custom_cfg') and cfg['location_custom_cfg'].is_a?(Hash) -%>
           <%- cfg['location_custom_cfg'].each do |key,value| -%>
